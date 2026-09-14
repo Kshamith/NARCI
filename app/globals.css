@@ -1,0 +1,80 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bone: #f2efea;
+  --ink: #0a0a0a;
+  --blood: #c81d25;
+}
+
+* {
+  border-radius: 0 !important;
+}
+
+html,
+body {
+  background: var(--bone);
+  color: var(--ink);
+}
+
+body {
+  font-family: var(--font-sans), Helvetica, Arial, sans-serif;
+}
+
+::selection {
+  background: var(--blood);
+  color: var(--bone);
+}
+
+button,
+input,
+select,
+textarea {
+  border-radius: 0;
+}
+
+/* I-beam text cursor only where text can actually be typed.
+   Plain copy (headings, paragraphs, cards) keeps the default arrow
+   while remaining selectable/copyable. */
+body,
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+li,
+ul,
+ol,
+span,
+div,
+article,
+section,
+dl,
+dt,
+dd {
+  cursor: default;
+}
+
+a,
+button,
+select,
+label,
+[role="button"] {
+  cursor: pointer;
+}
+
+input[type="text"],
+input:not([type]),
+input[type="search"],
+textarea {
+  cursor: text;
+}
+
+/* Hide default focus rings that look “product-SaaS”; keep a hard ink outline. */
+:focus-visible {
+  outline: 1px solid var(--ink);
+  outline-offset: 2px;
+}

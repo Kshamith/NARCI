@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Owner's Codebase Guide — NARCI</title>
+<meta name="description" content="Non-developer-friendly technical guide to the NARCI website codebase: what every file does and how to personalize the site.">
+<style>
+  :root {
+    --bone: #F2EFEA;
+    --ink: #0A0A0A;
+    --blood: #C81D25;
+    --paper: #FAF8F5;
+    --line: #0A0A0A;
+    --muted: rgba(10, 10, 10, .62);
+    --code-bg: #0A0A0A;
+    --code-fg: #F2EFEA;
+  }
+  * { box-sizing: border-box; border-radius: 0 !important; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bone);
+    color: var(--ink);
+    font-family: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection { background: var(--blood); color: var(--bone); }
+
+  /* ---------- hero ---------- */
+  .hero {
+    background: var(--ink);
+    color: var(--bone);
+    padding: 64px 32px 48px;
+    border-bottom: 6px solid var(--blood);
+  }
+  .hero .kicker {
+    font-size: 11px; letter-spacing: .22em; text-transform: uppercase;
+    color: var(--bone); opacity: .7; margin: 0 0 12px;
+  }
+  .hero h1 {
+    font-family: "Archivo Black", "Arial Black", "Arial Bold", sans-serif;
+    font-size: clamp(40px, 7vw, 84px);
+    line-height: .9; letter-spacing: -.02em; text-transform: uppercase;
+    margin: 0 0 16px;
+  }
+  .hero h1 .red { color: var(--blood); }
+  .hero p.sub { max-width: 640px; margin: 0; font-size: 17px; opacity: .85; }
+  .hero .meta {
+    margin-top: 20px; font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+    opacity: .6;
+  }
+
+  /* ---------- layout ---------- */
+  .wrap {
+    display: grid;
+    grid-template-columns: 260px minmax(0, 1fr);
+    align-items: start;
+    max-width: 1180px;
+    margin: 0 auto;
+  }
+  aside.toc {
+    position: sticky; top: 0;
+    max-height: 100vh; overflow: auto;
+    padding: 28px 20px 40px 32px;
+    border-right: 1px solid var(--line);
+    font-size: 13px;
+  }
+  aside.toc p { font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); margin: 0 0 10px; }
+  aside.toc ol { list-style: none; margin: 0; padding: 0; }
+  aside.toc li { margin: 2px 0; }
+  aside.toc a {
+    display: block; padding: 4px 8px;
+    color: var(--ink); text-decoration: none;
+    border-left: 2px solid transparent;
+    font-size: 12.5px; letter-spacing: .02em;
+  }
+  aside.toc a:hover { color: var(--blood); }
+  aside.toc a.active { border-left-color: var(--blood); color: var(--blood); font-weight: 700; }
+
+  main { padding: 28px 32px 120px; min-width: 0; }
+  section.block {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    padding: 28px 28px 24px;
+    margin: 0 0 24px;
+  }
+  section.block h2 {
+    font-family: "Archivo Black", "Arial Black", sans-serif;
+    text-transform: uppercase;
+    font-size: clamp(22px, 3vw, 32px);
+    line-height: 1; letter-spacing: -.01em;
+    margin: 0 0 4px;
+    padding-top: 8px;
+  }
+  section.block h2 .num { color: var(--blood); margin-right: 10px; }
+  section.block h3 {
+    font-size: 13px; letter-spacing: .18em; text-transform: uppercase;
+    margin: 26px 0 8px; padding-top: 14px; border-top: 1px solid var(--line);
+  }
+  section.block p, section.block li { max-width: 72ch; }
+  .file { font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size: .86em; background: rgba(10,10,10,.07); padding: 1px 6px; white-space: nowrap; }
+  a { color: var(--blood); }
+
+  /* ---------- tables ---------- */
+  table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 14px; }
+  th, td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--ink); color: var(--bone); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; }
+  td:first-child { white-space: nowrap; }
+
+  /* ---------- code ---------- */
+  pre {
+    position: relative;
+    background: var(--code-bg); color: var(--code-fg);
+    padding: 16px 16px 14px; margin: 14px 0;
+    overflow-x: auto; font-size: 13.5px; line-height: 1.6;
+  }
+  pre code { font-family: ui-monospace, "SF Mono", Consolas, monospace; }
+  button.copy {
+    position: absolute; top: 8px; right: 8px;
+    background: transparent; color: var(--bone);
+    border: 1px solid var(--bone);
+    font-size: 10px; letter-spacing: .16em; text-transform: uppercase;
+    padding: 4px 10px; cursor: pointer; opacity: .7;
+  }
+  button.copy:hover { opacity: 1; background: var(--blood); border-color: var(--blood); }
+
+  /* ---------- callouts ---------- */
+  .callout { border: 1px solid var(--line); border-left: 6px solid var(--line); padding: 12px 16px; margin: 16px 0; font-size: 14.5px; background: var(--bone); }
+  .callout.warn { border-left-color: var(--blood); }
+  .callout.warn strong:first-child { color: var(--blood); }
+  .callout.tip { border-left-color: var(--ink); }
+
+  /* ---------- misc ---------- */
+  .msg {
+    background: var(--ink); color: var(--bone);
+    padding: 16px 18px; margin: 14px 0; font-size: 14px;
+    white-space: pre-wrap; font-family: ui-monospace, Consolas, monospace;
+  }
+  details { border: 1px solid var(--line); margin: 8px 0; background: var(--bone); }
+  details summary { cursor: pointer; padding: 10px 14px; font-weight: 700; font-size: 14px; }
+  details summary:hover { color: var(--blood); }
+  details .body { padding: 0 14px 14px; font-size: 14.5px; }
+  dl.gloss { display: grid; grid-template-columns: 160px 1fr; gap: 6px 16px; font-size: 14.5px; }
+  dl.gloss dt { font-weight: 700; }
+  dl.gloss dd { margin: 0; }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .cols > div { border: 1px solid var(--line); padding: 12px 16px; font-size: 14px; }
+  .cols h4 { margin: 0 0 6px; font-size: 12px; letter-spacing: .16em; text-transform: uppercase; }
+  .safe h4 { color: #1a7a2e; } .ask h4 { color: var(--blood); }
+  footer.page { border-top: 1px solid var(--line); padding: 24px 32px 48px; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); max-width: 1180px; margin: 0 auto; }
+  .top-link { display: inline-block; margin-top: 24px; font-size: 12px; letter-spacing: .16em; text-transform: uppercase; }
+
+  @media (max-width: 900px) {
+    .wrap { grid-template-columns: 1fr; }
+    aside.toc { position: static; max-height: none; border-right: 0; border-bottom: 1px solid var(--line); padding: 20px 32px; }
+    aside.toc ol { columns: 2; }
+    main { padding: 20px 16px 80px; }
+    section.block { padding: 20px 16px; }
+    .cols { grid-template-columns: 1fr; }
+    dl.gloss { grid-template-columns: 1fr; }
+  }
+  @media print {
+    aside.toc, button.copy, .top-link { display: none !important; }
+    .wrap { display: block; }
+    body { background: #fff; font-size: 12px; }
+    section.block { break-inside: avoid; background: #fff; }
+    .hero { background: #fff; color: #000; border-bottom: 3px solid #000; padding: 24px; }
+    .hero h1 .red { color: #000; }
+    pre { background: #f0f0f0; color: #000; border: 1px solid #999; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero" id="top">
+  <p class="kicker">NARCI &mdash; Internal Documentation</p>
+  <h1>Owner&rsquo;s<br>Codebase <span class="red">Guide</span></h1>
+  <p class="sub">What every part of the website does, which files to touch to personalize it, and which placeholders still need replacing before launch. Mirrors <code>docs/owner-guide.md</code>.</p>
+  <p class="meta">Repo root: narci-web/ &nbsp;&middot;&nbsp; Stack: Next.js 14 + React 18 + Tailwind 3.4</p>
+</header>
+
+<div class="wrap">
+  <aside class="toc" aria-label="Guide contents">
+    <p>Contents</p>
+    <ol id="toc-list">
+      <li><a href="#placeholders">0. Launch placeholders</a></li>
+      <li><a href="#what-it-is">1. What this site is</a></li>
+      <li><a href="#workflow">2. Viewing &amp; editing</a></li>
+      <li><a href="#pages">3. Pages &amp; URLs</a></li>
+      <li><a href="#nav-footer">4. Top bar &amp; footer</a></li>
+      <li><a href="#catalog">5. Products: the catalog</a></li>
+      <li><a href="#photos">6. Product photos</a></li>
+      <li><a href="#hero">7. Home page hero</a></li>
+      <li><a href="#shop">8. Shop cards &amp; filters</a></li>
+      <li><a href="#detail">9. Product detail page</a></li>
+      <li><a href="#checkout">10. Bag, coupons, WhatsApp</a></li>
+      <li><a href="#admin">11. Admin console</a></li>
+      <li><a href="#style">12. Look &amp; feel</a></li>
+      <li><a href="#safe">13. Safe vs ask-a-dev</a></li>
+      <li><a href="#trouble">14. Troubleshooting</a></li>
+      <li><a href="#glossary">Glossary</a></li>
+    </ol>
+  </aside>
+
+  <main>
+    <section class="block" id="placeholders">
+      <h2><span class="num">0.</span>Placeholders to replace before launch</h2>
+      <div class="callout warn"><strong>Do these first.</strong> The site works without them, but orders, links and the inbox will point at dummy values.</div>
+      <table>
+        <tr><th>#</th><th>What</th><th>File</th><th>Change to</th></tr>
+        <tr><td>1</td><td>WhatsApp number</td><td><span class="file">lib/whatsapp.ts:5</span></td><td>Real Business number, digits only with country code, e.g. <span class="file">919876543210</span></td></tr>
+        <tr><td>2</td><td>Instagram link</td><td><span class="file">components/Footer.tsx:37</span>, <span class="file">app/contact/page.tsx:35</span></td><td>Brand profile URL</td></tr>
+        <tr><td>3</td><td>Contact email</td><td><span class="file">app/contact/page.tsx:43&ndash;46</span>, <span class="file">components/ContactForm.tsx:17</span></td><td>Real inbox, in both files</td></tr>
+        <tr><td>4</td><td>Newsletter signup</td><td><span class="file">components/Footer.tsx:13</span></td><td>Wire to a provider or delete the form</td></tr>
+        <tr><td>5</td><td>Product photos</td><td><span class="file">public/products/</span> + <span class="file">ProductVisual.tsx:9</span></td><td>Real JPGs, then set <span class="file">USE_REAL_PHOTOS = true</span></td></tr>
+        <tr><td>6</td><td>Admin PIN</td><td><span class="file">components/AdminConsole.tsx:16&ndash;19</span></td><td>Set <span class="file">NEXT_PUBLIC_ADMIN_PIN</span> env var</td></tr>
+      </table>
+    </section>
+
+    <section class="block" id="what-it-is">
+      <h2><span class="num">1.</span>What this site is</h2>
+      <p>A Next.js 14 static site with <strong>no backend and no database</strong>. The catalog is a TypeScript list, the bag lives in each visitor&rsquo;s browser, checkout hands off to WhatsApp, and admin edits live in browser storage.</p>
+      <table>
+        <tr><th>Folder</th><th>Contains</th><th>Edit to change&hellip;</th></tr>
+        <tr><td><span class="file">data/</span></td><td>Product list + price/size helpers</td><td>Products, prices, sizes, categories</td></tr>
+        <tr><td><span class="file">components/</span></td><td>Reusable UI (nav, cards, cart, admin)</td><td>How things look and behave</td></tr>
+        <tr><td><span class="file">app/</span></td><td>Pages &amp; URLs (one folder = one URL)</td><td>Page copy, which URL shows what</td></tr>
+        <tr><td><span class="file">lib/</span></td><td>Coupons, WhatsApp message, formatting, storage</td><td>Discount rules, order text, currency</td></tr>
+        <tr><td><span class="file">public/products/</span></td><td>Product JPGs</td><td>Photos</td></tr>
+        <tr><td><span class="file">globals.css</span> + <span class="file">tailwind.config.ts</span></td><td>Colors, fonts, global rules</td><td>Brand styling</td></tr>
+      </table>
+    </section>
+
+    <section class="block" id="workflow">
+      <h2><span class="num">2.</span>Viewing &amp; editing</h2>
+      <pre><code>npm install   # once
+npm run dev   # preview at http://localhost:3000
+npm run lint  # static checks
+npm run build # production build (before deploying)</code></pre>
+      <p>Edit a file, save, and the dev server hot-reloads &mdash; check the browser. Deploy via Vercel; no env vars required except the optional admin PIN.</p>
+    </section>
+
+    <section class="block" id="pages">
+      <h2><span class="num">3.</span>Pages &amp; URLs</h2>
+      <p>A folder inside <span class="file">app/</span> is a URL. The shared shell (top bar, footer, bag drawer on every page) is composed in <span class="file">app/layout.tsx:39&ndash;44</span>; site title/description in <span class="file">app/layout.tsx:20&ndash;27</span>.</p>
+      <table>
+        <tr><th>URL</th><th>File</th><th>Renders with</th></tr>
+        <tr><td>/</td><td><span class="file">app/page.tsx</span></td><td><span class="file">HomeHero.tsx</span></td></tr>
+        <tr><td>/shop</td><td><span class="file">app/shop/page.tsx</span></td><td><span class="file">ShopCatalog.tsx</span> + <span class="file">ShopCard.tsx</span></td></tr>
+        <tr><td>/shop/&lt;slug&gt;</td><td><span class="file">app/shop/[slug]/page.tsx</span></td><td><span class="file">ProductDetail.tsx</span> (+ <span class="file">AdminProductPage.tsx</span> fallback)</td></tr>
+        <tr><td>/about</td><td><span class="file">app/about/page.tsx</span></td><td>Self-contained manifesto</td></tr>
+        <tr><td>/contact</td><td><span class="file">app/contact/page.tsx</span></td><td><span class="file">ContactForm.tsx</span></td></tr>
+        <tr><td>/admin</td><td><span class="file">app/admin/page.tsx</span></td><td><span class="file">AdminConsole.tsx</span> (PIN-gated, noindex)</td></tr>
+      </table>
+    </section>
+
+    <section class="block" id="nav-footer">
+      <h2><span class="num">4.</span>Top bar &amp; footer</h2>
+      <h3>Top bar &mdash; components/Nav.tsx</h3>
+      <p>Tabs are a data array (<span class="file">Nav.tsx:7&ndash;12</span>). To add or rename a tab, add/edit an entry &mdash; keep <span class="file">href</span>, <span class="file">label</span> and <span class="file">match</span> consistent; <span class="file">match</span> drives the red active underline. Brand text: <span class="file">Nav.tsx:21&ndash;26</span>. Bag button opens the drawer; its count comes from cart state.</p>
+      <pre><code>{ href: "/shop", label: "SHOP",
+  match: (p) =&gt; p === "/shop" || p.startsWith("/shop/") },</code></pre>
+      <h3>Footer &mdash; components/Footer.tsx</h3>
+      <p>Tagline (<span class="file">Footer.tsx:22&ndash;24</span>), link list (<span class="file">Footer.tsx:27&ndash;51</span>; WhatsApp reuses the shared number). The newsletter form is a <strong>placeholder</strong> &mdash; submit only logs to console (<span class="file">Footer.tsx:13</span>). Connect a provider or delete the form.</p>
+    </section>
+
+    <section class="block" id="catalog">
+      <h2><span class="num">5.</span>Products: the catalog</h2>
+      <p><span class="file">data/products.ts</span> is the source of truth for the 5 built-in products. Prefer the Admin console for day-to-day work; hand-edit this file for bulk setup.</p>
+      <table>
+        <tr><th>Field</th><th>Used for</th><th>Rules</th></tr>
+        <tr><td><span class="file">id</span></td><td>Internal identity</td><td>Unique; never reuse</td></tr>
+        <tr><td><span class="file">sku</span></td><td>Cards, bag, WhatsApp (e.g. NARCI-001)</td><td>Unique, permanent &mdash; the product&rsquo;s ID</td></tr>
+        <tr><td><span class="file">slug</span></td><td>URL: /shop/&lt;slug&gt;</td><td>Unique, lowercase, dashes only</td></tr>
+        <tr><td><span class="file">name</span></td><td>Card + detail headings</td><td>1&ndash;2 lines; cards reserve exactly 2</td></tr>
+        <tr><td><span class="file">tagline</span></td><td>Card subtitle</td><td>Keep to one line</td></tr>
+        <tr><td><span class="file">description</span></td><td>Detail paragraph</td><td>Free text</td></tr>
+        <tr><td><span class="file">price</span></td><td>Base price (INR)</td><td>Fallback when sizes absent</td></tr>
+        <tr><td><span class="file">sizes[]</span></td><td>Variants, each with own price</td><td>&ge;1 entry; single-size = ONE SIZE</td></tr>
+        <tr><td><span class="file">images[3]</span></td><td>FRONT / SIDE / DETAIL</td><td>Paths under /products/&hellip;</td></tr>
+        <tr><td><span class="file">category</span></td><td>Shop filter value</td><td>Keep spelling consistent</td></tr>
+        <tr><td><span class="file">specs[3]</span></td><td>Card row + detail list</td><td>Material, Dimensions, Mount</td></tr>
+      </table>
+      <pre><code>sizes: [
+  { label: "S", price: 2900 },
+  { label: "M", price: 3400 },
+  { label: "L", price: 3900 },
+],</code></pre>
+      <p>Helpers in the same file: <span class="file">getSizes()</span> (ONE SIZE fallback), <span class="file">getSizePrice()</span>, <span class="file">getFromPrice()</span> (lowest price, shown as FROM ₹X). <span class="file">FEATURED_SKU = "NARCI-003"</span> picks the home hero product.</p>
+    </section>
+
+    <section class="block" id="photos">
+      <h2><span class="num">6.</span>Product photos</h2>
+      <p>Until real photography exists, branded placeholder blocks render instead. To go live:</p>
+      <ol>
+        <li>Save JPGs at exactly the paths in each product&rsquo;s <span class="file">images</span> (in <span class="file">public/products/</span>). Keep 3 per product.</li>
+        <li>Flip the switch in <span class="file">components/ProductVisual.tsx:9</span>:</li>
+      </ol>
+      <pre><code>const USE_REAL_PHOTOS = false;
+// becomes:
+const USE_REAL_PHOTOS = true;</code></pre>
+      <p>Photos use <span class="file">object-contain</span> (no cropping). Portrait orientation suits the card and hero frames best.</p>
+    </section>
+
+    <section class="block" id="hero">
+      <h2><span class="num">7.</span>Home page hero</h2>
+      <p><span class="file">components/HomeHero.tsx</span>: featured product = <span class="file">FEATURED_SKU</span> (else first item); giant background NARCI text; info strip (SKU, name, tagline, size(s), price &mdash; FROM ₹X when multi-size); hero Add to Bag uses the default size. The &ldquo;More steel&rdquo; row shows the next 4 products; the manifesto block below is plain copy &mdash; edit the words in place. To change the hero piece, change <span class="file">FEATURED_SKU</span>.</p>
+    </section>
+
+    <section class="block" id="shop">
+      <h2><span class="num">8.</span>Shop cards &amp; filters</h2>
+      <p><span class="file">ShopCatalog.tsx</span>: Category options come from the data itself (unique <span class="file">category</span> values) &mdash; rename a category by editing the products. Sort: Featured (catalog order) or Price &uarr;/&darr; on the from-price. <span class="file">ShopCard.tsx</span> enforces uniform heights (title clamped to 2 lines with 2 lines reserved, tagline/specs clamped, footer pinned), so long admin-entered names can&rsquo;t break the grid. Multi-size cards show FROM ₹X plus a size row; single-size cards show a matching ONE SIZE row.</p>
+    </section>
+
+    <section class="block" id="detail">
+      <h2><span class="num">9.</span>Product detail page</h2>
+      <p><span class="file">components/ProductDetail.tsx</span>: back-to-shop bar with breadcrumb; gallery (main + 3 thumbnails); size selector that appears only with 2+ sizes (buttons show label &middot; price); qty stepper + Add to Bag; spec list; Related row of 3. Price, bag line and WhatsApp message all use the selected size&rsquo;s price. The page overlays admin edits onto the built-in snapshot and resets selection when navigating. Admin-added slugs resolve client-side via <span class="file">AdminProductPage.tsx</span> (brief &ldquo;Loading&hellip;&rdquo; on hard refresh); truly unknown slugs still 404.</p>
+    </section>
+
+    <section class="block" id="checkout">
+      <h2><span class="num">10.</span>Bag, coupons, WhatsApp</h2>
+      <h3>Bag</h3>
+      <p>Slide-over drawer on every page (<span class="file">CartDrawer.tsx</span>, mounted in <span class="file">layout.tsx:43</span>). Lines keyed by SKU + size; stored per-browser under <span class="file">narci-cart</span>. Prices resolve through the merged catalog, so admin edits apply to bag lines too.</p>
+      <h3>Coupons &mdash; lib/coupons.ts</h3>
+      <p>Seeds: <span class="file">NARCI10</span> (10% off, no minimum) and <span class="file">FLAT500</span> (₹500 off, min ₹2,000). Percent max 90, flat capped at subtotal, codes case-insensitive. Apply validates first &mdash; wrong codes are never stored as &ldquo;applied&rdquo;; stale codes (bag below minimum, disabled/deleted) auto-clear. Manage codes in /admin &rarr; Coupons.</p>
+      <h3>WhatsApp handoff &mdash; lib/whatsapp.ts</h3>
+      <div class="callout warn"><strong>Set the number:</strong> <span class="file">lib/whatsapp.ts:5</span> &mdash; digits only with country code, e.g. <span class="file">919876543210</span>. Footer and contact buttons reuse it.</div>
+      <pre><code>export const WHATSAPP_PHONE = "15555555555";
+// becomes, e.g.:
+export const WHATSAPP_PHONE = "919876543210";</code></pre>
+      <p>Message format (size per line; coupon block only when valid):</p>
+      <div class="msg">Hi NARCI, I'd like to order:
+- NARCI-004 (M) x2 — Pit Wall Number Plate — ₹6,800
+Subtotal: ₹6,800
+Coupon: NARCI10 (−₹680)
+Total: ₹6,120</div>
+      <h3>Contact form &amp; currency</h3>
+      <p>The form opens the visitor&rsquo;s mail app to <span class="file">studio@narci.example</span> &mdash; update it in <span class="file">ContactForm.tsx:17</span> and <span class="file">contact/page.tsx:42&ndash;47</span>. No server delivery exists. Currency: <span class="file">lib/format.ts</span> (<span class="file">en-IN</span>/INR/zero decimals) covers the whole site.</p>
+    </section>
+
+    <section class="block" id="admin">
+      <h2><span class="num">11.</span>Admin console (/admin)</h2>
+      <p><span class="file">app/admin/page.tsx</span> &rarr; <span class="file">components/AdminConsole.tsx</span> (noindex). Tabs: products, coupons, orders.</p>
+      <h3>Entry gate</h3>
+      <p>PIN screen, session-only. Default <span class="file">narci123</span>; set <span class="file">NEXT_PUBLIC_ADMIN_PIN</span> in Vercel env vars + redeploy for a real one. This is a UI gate, <strong>not real security</strong>.</p>
+      <pre><code># Vercel → Project Settings → Environment Variables
+NEXT_PUBLIC_ADMIN_PIN=your-pin-here</code></pre>
+      <h3>Products tab</h3>
+      <p>View / Edit / Delete per row, + New product, Reset defaults. SKU is <strong>locked after creation</strong> (delete + recreate to change it). Slug auto-generates from the name; category is free text (new values appear in the shop filter). Sizes editor: one row per variant with its own label + price; single-size = one ONE SIZE row. Validation: name/SKU/price required, &ge;1 labelled size, unique SKU/slug.</p>
+      <h3>Coupons &amp; orders tabs</h3>
+      <p>Coupons: add code + type + value + optional minimum, Enable/Disable, Delete, Reset defaults. Orders: no server orders exist &mdash; sales arrive as WhatsApp chats. The tab shows a local log (this browser, last 50) of each handoff with lines, sizes, coupon and totals.</p>
+      <div class="callout warn"><strong>LocalStorage caveat:</strong> admin edits live only in the browser where made (keys <span class="file">narci-admin-products-v1</span>, <span class="file">narci-coupons-v1</span>, <span class="file">narci-order-log-v1</span>; bag: <span class="file">narci-cart</span>). Invisible on other devices/incognito; clearing site data wipes them. Until a CMS backend exists, make edits in the demo browser and treat <span class="file">data/products.ts</span> as canonical.</div>
+    </section>
+
+    <section class="block" id="style">
+      <h2><span class="num">12.</span>Look &amp; feel</h2>
+      <p>Brand tokens live in two files &mdash; keep them in sync. Bone = background, ink = text/borders, blood = accents (active tab, discounts, CTAs).</p>
+      <pre><code>// tailwind.config.ts → classes like bg-bone, text-ink, bg-blood
+bone: "#F2EFEA",  ink: "#0A0A0A",  blood: "#C81D25"
+// app/globals.css :root — same three values as CSS variables</code></pre>
+      <p>Fonts (<span class="file">app/layout.tsx:9&ndash;18</span>): Archivo Black display (<span class="file">font-display</span>), Inter body (<span class="file">font-sans</span>). Signature rules in <span class="file">globals.css</span>: zero radius, blood-on-bone selection, arrow cursor on copy with I-beam only in inputs, hard ink focus outline. Motion (hero entrance, drawer slide) uses local timing constants via framer-motion.</p>
+    </section>
+
+    <section class="block" id="safe">
+      <h2><span class="num">13.</span>Safe vs ask-a-developer</h2>
+      <div class="cols">
+        <div class="safe"><h4>Safe to touch</h4>Product fields &amp; FEATURED_SKU &middot; hero/manifesto/about copy &middot; contact copy/links &middot; nav labels/links &middot; footer tagline/links &middot; brand hexes + fonts &middot; WhatsApp number, email, Instagram &middot; seed coupons &middot; cursor/selection CSS</div>
+        <div class="ask"><h4>Ask a developer</h4>Checkout math &amp; message building &middot; coupon validation &middot; cart line keys (SKU + size) &middot; AdminProductPage resolution &middot; routing/metadata &middot; localStorage&rarr;CMS migration &middot; newsletter backend &middot; catalog sanitizers</div>
+      </div>
+    </section>
+
+    <section class="block" id="trouble">
+      <h2><span class="num">14.</span>Troubleshooting</h2>
+      <details><summary>Order goes nowhere / wrong number</summary><div class="body">WHATSAPP_PHONE still placeholder &mdash; set a real digits-only number (see §10).</div></details>
+      <details><summary>New admin product 404s on another device</summary><div class="body">Admin edits are per-browser localStorage. Use the demo browser; long-term, add a backend (§11).</div></details>
+      <details><summary>New size not selectable</summary><div class="body">Every size row needs a label; the detail page resets selection when sizes change (§9).</div></details>
+      <details><summary>Coupon rejected</summary><div class="body">Typo, disabled/deleted code, or bag below minSubtotal &mdash; check /admin &rarr; Coupons (§10).</div></details>
+      <details><summary>Duplicate-looking shop categories</summary><div class="body">Category spelling differs between products &mdash; unify the string (§8).</div></details>
+      <details><summary>Stale prices after admin edits</summary><div class="body">Different browser, or cached static page &mdash; same browser, hard refresh, rebuild/redeploy.</div></details>
+      <details><summary>Demo PIN hint visible publicly</summary><div class="body">NEXT_PUBLIC_ADMIN_PIN unset &mdash; set it and redeploy (§11).</div></details>
+      <details><summary>Newsletter Join does nothing</summary><div class="body">Placeholder handler &mdash; wire a provider or remove the form (§4).</div></details>
+    </section>
+
+    <section class="block" id="glossary">
+      <h2>Glossary</h2>
+      <dl class="gloss">
+        <dt>Component</dt><dd>Reusable UI block (components/). Pages compose them.</dd>
+        <dt>Route</dt><dd>A URL. Folder under app/ = segment; page.tsx renders it; [slug] matches any product URL.</dd>
+        <dt>localStorage</dt><dd>Per-browser storage on the visitor&rsquo;s device. Survives reloads; invisible to other devices and the server.</dd>
+        <dt>SSG</dt><dd>Static generation &mdash; pages pre-rendered at build time. The 5 built-ins pre-render; admin items resolve in-browser.</dd>
+        <dt>Noindex</dt><dd>Search engines told not to list /admin.</dd>
+        <dt>Slug</dt><dd>URL-safe product id (framed-katana &rarr; /shop/framed-katana).</dd>
+        <dt>SKU</dt><dd>Permanent product code shown to buyers and staff.</dd>
+      </dl>
+      <a class="top-link" href="#top">&uarr; Back to top</a>
+    </section>
+  </main>
+</div>
+
+<footer class="page">NARCI &mdash; Owner&rsquo;s Codebase Guide &nbsp;&middot;&nbsp; mirrors docs/owner-guide.md</footer>
+
+<script>
+(function () {
+  // Copy buttons for code blocks
+  document.querySelectorAll("pre").forEach(function (pre) {
+    var btn = document.createElement("button");
+    btn.className = "copy";
+    btn.type = "button";
+    btn.textContent = "Copy";
+    btn.addEventListener("click", function () {
+      var text = pre.querySelector("code").innerText;
+      function done() {
+        btn.textContent = "Copied";
+        setTimeout(function () { btn.textContent = "Copy"; }, 1500);
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, function () { fallback(); });
+      } else { fallback(); }
+      function fallback() {
+        var ta = document.createElement("textarea");
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand("copy"); } catch (e) {}
+        document.body.removeChild(ta);
+        done();
+      }
+    });
+    pre.appendChild(btn);
+  });
+
+  // Scrollspy for TOC
+  var links = Array.prototype.slice.call(document.querySelectorAll("#toc-list a"));
+  var map = {};
+  links.forEach(function (a) {
+    var id = a.getAttribute("href").slice(1);
+    var el = document.getElementById(id);
+    if (el) map[id] = a;
+  });
+  if ("IntersectionObserver" in window) {
+    var obs = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting) {
+          links.forEach(function (a) { a.classList.remove("active"); });
+          var a = map[en.target.id];
+          if (a) a.classList.add("active");
+        }
+      });
+    }, { rootMargin: "-30% 0px -60% 0px" });
+    Object.keys(map).forEach(function (id) { obs.observe(document.getElementById(id)); });
+  }
+})();
+</script>
+</body>
+</html>
