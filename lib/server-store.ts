@@ -51,6 +51,16 @@ export async function writeDataFile(name: string, value: unknown) {
   });
   if (!putRes.ok) {
     const text = await putRes.text();
+    if (putRes.status === 403) {
+      throw new Error(
+        `GitHub rejected the token (403). Fix: create a fine-grained personal access token scoped to "${repo}" with Contents: read + write, put it in GITHUB_TOKEN (Vercel → Environment Variables, all environments), then Redeploy. Details: ${text.slice(0, 200)}`,
+      );
+    }
+    if (putRes.status === 404) {
+      throw new Error(
+        `GitHub repo/branch not found (404). Fix: check GITHUB_REPO ("${repo}") and GITHUB_BRANCH ("${branch}") in Vercel env vars, then Redeploy. Details: ${text.slice(0, 200)}`,
+      );
+    }
     throw new Error(`GitHub commit failed (${putRes.status}): ${text.slice(0, 300)}`);
   }
   const json = await putRes.json();

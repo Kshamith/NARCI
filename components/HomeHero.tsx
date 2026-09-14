@@ -111,7 +111,7 @@ export function HomeHero() {
               <div className="relative">
                 <ProductVisual product={p} className="aspect-[4/5]" />
                 {p.isNew ? (
-                  <div className="absolute left-3 top-3">
+                  <div className="absolute right-3 top-3 z-20">
                     <NewBadge />
                   </div>
                 ) : null}
