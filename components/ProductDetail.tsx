@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AddToBagButton } from "@/components/AddToBagButton";
+import { NewBadge } from "@/components/NewBadge";
 import { ProductVisual } from "@/components/ProductVisual";
 import type { Product } from "@/data/products";
 import { getFromPrice, getSizes } from "@/data/products";
@@ -78,9 +79,12 @@ export function ProductDetail({
           </div>
         </div>
         <div className="flex flex-col p-6 md:p-10">
-          <p className="font-sans text-[11px] uppercase tracking-[0.2em]">
-            {live.sku}
-          </p>
+          <div className="flex items-center gap-3">
+            <p className="font-sans text-[11px] uppercase tracking-[0.2em]">
+              {live.sku}
+            </p>
+            {live.isNew ? <NewBadge /> : null}
+          </div>
           <h1 className="mt-3 font-display text-5xl uppercase leading-[0.9] tracking-tight md:text-7xl">
             {live.name}
           </h1>

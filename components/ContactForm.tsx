@@ -14,7 +14,7 @@ export function ContactForm() {
     console.log("[NARCI contact]", { name, email, message });
     const subject = encodeURIComponent(`NARCI enquiry from ${name}`);
     const body = encodeURIComponent(`${message}\n\n— ${name}\n${email}`);
-    window.location.href = `mailto:studio@narci.example?subject=${subject}&body=${body}`;
+    window.location.href = `mailto:kshamithrajshetty@gmail.com?subject=${subject}&body=${body}`;
     setSent(true);
   }
 

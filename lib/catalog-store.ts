@@ -1,14 +1,17 @@
-import { useEffect, useState } from "react";
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
 import { products as defaultProducts } from "@/data/products";
 import type { Product } from "@/data/products";
 
 export const CATALOG_STORAGE_KEY = "narci-admin-products-v1";
+const CATALOG_URL = "/data/products.json";
 
 /**
- * Admin catalog overrides.
- * Today: static defaults in data/products.ts merged with localStorage edits
- * from /admin. Later: swap getCatalogProducts() to fetch from a headless CMS
- * without touching shop/cart components.
+ * Shared catalog.
+ * Reads from /data/products.json (committed to the repo, same for every
+ * device after redeploy). Falls back to bundled defaults + legacy
+ * localStorage overrides from older admin versions.
  */
 
 function sanitizeProducts(list: unknown): Product[] | null {
@@ -64,47 +67,102 @@ function sanitizeProducts(list: unknown): Product[] | null {
       specs: Array.isArray(r.specs)
         ? (r.specs as unknown[]).map(String)
         : [],
+      isNew: r.isNew === true,
     });
   }
   return out.length > 0 ? out : null;
 }
 
-/** Merged catalog. Safe on server (returns static defaults). */
+/** Synchronous snapshot: bundled defaults (safe on server). */
 export function getCatalogProducts(): Product[] {
   if (typeof window === "undefined") return defaultProducts;
+  return defaultProducts;
+}
+
+async function fetchSharedCatalog(): Promise<Product[] | null> {
   try {
-    const raw = window.localStorage.getItem(CATALOG_STORAGE_KEY);
-    if (!raw) return defaultProducts;
-    return sanitizeProducts(JSON.parse(raw)) ?? defaultProducts;
+    const res = await fetch(CATALOG_URL, { cache: "no-store" });
+    if (!res.ok) return null;
+    return sanitizeProducts(await res.json());
   } catch {
-    return defaultProducts;
+    return null;
   }
 }
 
-export function saveCatalogProducts(next: Product[]) {
-  if (typeof window === "undefined") return;
-  window.localStorage.setItem(CATALOG_STORAGE_KEY, JSON.stringify(next));
+function readLegacyLocal(): Product[] | null {
+  try {
+    const raw = window.localStorage.getItem(CATALOG_STORAGE_KEY);
+    if (!raw) return null;
+    return sanitizeProducts(JSON.parse(raw));
+  } catch {
+    return null;
+  }
+}
+
+/** Persist via API (commits to GitHub on Vercel). Returns commit info. */
+export async function saveCatalogProductsRemote(next: Product[], pin: string) {
+  const res = await fetch("/api/products", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json", "x-admin-pin": pin },
+    body: JSON.stringify(next),
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(json?.error ?? `Save failed (${res.status})`);
+  try {
+    window.localStorage.removeItem(CATALOG_STORAGE_KEY);
+  } catch {
+    /* ignore */
+  }
+  return json as { ok: true; committed?: boolean; sha?: string; url?: string };
 }
 
 export function resetCatalogProducts() {
   if (typeof window === "undefined") return;
-  window.localStorage.removeItem(CATALOG_STORAGE_KEY);
+  try {
+    window.localStorage.removeItem(CATALOG_STORAGE_KEY);
+  } catch {
+    /* ignore */
+  }
 }
 
 export function useCatalogProducts() {
   const [items, setItems] = useState<Product[]>(defaultProducts);
+  const [loaded, setLoaded] = useState(false);
+
   useEffect(() => {
-    setItems(getCatalogProducts());
+    let cancelled = false;
+    (async () => {
+      const shared = await fetchSharedCatalog();
+      if (cancelled) return;
+      if (shared) {
+        setItems(shared);
+      } else {
+        const legacy = readLegacyLocal();
+        if (legacy) setItems(legacy);
+      }
+      setLoaded(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
-  return {
-    items,
-    persist: (next: Product[]) => {
-      saveCatalogProducts(next);
+
+  const persist = useCallback(
+    async (next: Product[], pin: string) => {
+      const result = await saveCatalogProductsRemote(next, pin);
       setItems(next);
+      return result;
     },
-    reset: () => {
-      resetCatalogProducts();
-      setItems(defaultProducts);
-    },
-  };
+    [],
+  );
+
+  const reset = useCallback(async (pin: string) => {
+    const result = await saveCatalogProductsRemote(defaultProducts, pin);
+    setItems(defaultProducts);
+    return result;
+  }, []);
+
+  return { items, loaded, persist, reset, setItems };
 }
+
+export { sanitizeProducts };

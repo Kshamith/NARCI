@@ -37,4 +37,28 @@ export function appendOrderLog(entry: OrderLogEntry) {
   } catch {
     /* storage unavailable — ordering via WhatsApp still works */
   }
+  // Best-effort shared log (visible in /admin on all devices after redeploy).
+  // Never blocks WhatsApp checkout.
+  try {
+    fetch("/api/orders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(entry),
+    }).catch(() => {
+      /* ignore */
+    });
+  } catch {
+    /* ignore */
+  }
+}
+
+export async function readSharedOrderLog(): Promise<OrderLogEntry[]> {
+  try {
+    const res = await fetch("/api/orders", { cache: "no-store" });
+    if (!res.ok) return [];
+    const json = await res.json();
+    return Array.isArray(json) ? (json as OrderLogEntry[]) : [];
+  } catch {
+    return [];
+  }
 }

@@ -5,6 +5,7 @@ import { useState } from "react";
 import type { Product } from "@/data/products";
 import { getFromPrice, getSizes } from "@/data/products";
 import { ProductVisual } from "@/components/ProductVisual";
+import { NewBadge } from "@/components/NewBadge";
 import { formatINR } from "@/lib/format";
 
 export function ShopCard({ product }: { product: Product }) {
@@ -31,6 +32,7 @@ export function ShopCard({ product }: { product: Product }) {
         onMouseLeave={() => setAngle(0)}
       >
         <div className="px-4 pt-5">
+          {product.isNew ? <NewBadge className="mb-2" /> : null}
           <h2
             title={product.name}
             className="line-clamp-2 min-h-[2em] font-display text-4xl uppercase leading-none tracking-tight md:text-5xl"

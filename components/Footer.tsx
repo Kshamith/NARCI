@@ -3,9 +3,13 @@
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { WHATSAPP_PHONE } from "@/lib/whatsapp";
+import { useSiteSettings } from "@/lib/site-settings";
 
 export function Footer() {
   const [email, setEmail] = useState("");
+  const { settings } = useSiteSettings();
+  const phone = settings.whatsappPhone || WHATSAPP_PHONE;
+  const instagram = settings.instagramUrl || "https://instagram.com";
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -34,7 +38,7 @@ export function Footer() {
             Contact
           </Link>
           <a
-            href="https://instagram.com"
+            href={instagram}
             target="_blank"
             rel="noreferrer"
             className="hover:text-blood"
@@ -42,7 +46,7 @@ export function Footer() {
             Instagram
           </a>
           <a
-            href={`https://wa.me/${WHATSAPP_PHONE}`}
+            href={`https://wa.me/${phone}`}
             target="_blank"
             rel="noreferrer"
             className="hover:text-blood"

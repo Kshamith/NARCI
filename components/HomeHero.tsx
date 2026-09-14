@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { AddToBagButton } from "@/components/AddToBagButton";
+import { NewBadge } from "@/components/NewBadge";
 import { ProductVisual } from "@/components/ProductVisual";
 import { FEATURED_SKU } from "@/data/products";
 import { getFromPrice, getSizes } from "@/data/products";
@@ -52,9 +53,12 @@ export function HomeHero() {
 
         <div className="grid border-t border-ink md:grid-cols-[1.4fr_0.7fr_0.7fr_1.1fr]">
           <div className="border-b border-ink px-4 py-4 md:border-b-0 md:border-r">
-            <p className="font-sans text-[10px] uppercase tracking-[0.2em] text-ink/60">
-              {featured.sku}
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="font-sans text-[10px] uppercase tracking-[0.2em] text-ink/60">
+                {featured.sku}
+              </p>
+              {featured.isNew ? <NewBadge /> : null}
+            </div>
             <p className="mt-1 font-display text-2xl uppercase leading-none">
               {featured.name}
             </p>
@@ -104,7 +108,14 @@ export function HomeHero() {
               href={`/shop/${p.slug}`}
               className="min-w-[280px] flex-1 border-r border-ink last:border-r-0"
             >
-              <ProductVisual product={p} className="aspect-[4/5]" />
+              <div className="relative">
+                <ProductVisual product={p} className="aspect-[4/5]" />
+                {p.isNew ? (
+                  <div className="absolute left-3 top-3">
+                    <NewBadge />
+                  </div>
+                ) : null}
+              </div>
               <div className="border-t border-ink px-4 py-3">
                 <p className="font-display text-xl uppercase leading-none">
                   {p.name}

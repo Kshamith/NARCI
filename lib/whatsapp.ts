@@ -1,8 +1,8 @@
 import type { Product } from "@/data/products";
 import { formatINR } from "@/lib/format";
 
-// TODO: replace with real WhatsApp Business number
-export const WHATSAPP_PHONE = "15555555555";
+// WhatsApp Business number, digits only with country code. Change via /admin → Settings.
+export const WHATSAPP_PHONE = "918618425359";
 
 export type OrderLine = {
   sku: string;

@@ -1,0 +1,4 @@
+[
+  { "code": "NARCI10", "kind": "percent", "value": 10, "minSubtotal": 0, "active": true },
+  { "code": "FLAT500", "kind": "flat", "value": 500, "minSubtotal": 2000, "active": true }
+]

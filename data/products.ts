@@ -23,6 +23,8 @@ export type Product = {
   images: string[];
   category: string;
   specs: string[];
+  /** When true, a "NEW" sticker is shown on cards / detail / hero. Toggled in /admin. */
+  isNew?: boolean;
 };
 
 export const products: Product[] = [

@@ -1,4 +1,6 @@
-import { useEffect, useState } from "react";
+"use client";
+
+import { useCallback, useEffect, useState } from "react";
 
 export type CouponKind = "percent" | "flat";
 
@@ -13,6 +15,7 @@ export type Coupon = {
 };
 
 export const COUPONS_STORAGE_KEY = "narci-coupons-v1";
+const COUPONS_URL = "/data/coupons.json";
 
 export const DEFAULT_COUPONS: Coupon[] = [
   { code: "NARCI10", kind: "percent", value: 10, minSubtotal: 0, active: true },
@@ -47,32 +50,53 @@ function sanitizeCoupons(list: unknown): Coupon[] | null {
   return out;
 }
 
-/** All coupons: admin overrides from localStorage when present, else defaults. Safe on server. */
+let couponCache: Coupon[] | null = null;
+if (typeof window !== "undefined") {
+  fetch(COUPONS_URL, { cache: "no-store" })
+    .then((r) => (r.ok ? r.json() : null))
+    .then((j) => {
+      const s = sanitizeCoupons(j);
+      if (s) couponCache = s;
+    })
+    .catch(() => {
+      /* keep defaults */
+    });
+}
+
+/** All coupons: shared JSON when loaded, else defaults. Safe on server. */
 export function getCoupons(): Coupon[] {
   if (typeof window === "undefined") return DEFAULT_COUPONS;
+  if (couponCache) return couponCache;
   try {
     const raw = window.localStorage.getItem(COUPONS_STORAGE_KEY);
-    if (!raw) return DEFAULT_COUPONS;
-    const parsed = sanitizeCoupons(JSON.parse(raw));
-    return parsed ?? DEFAULT_COUPONS;
+    if (raw) {
+      const parsed = sanitizeCoupons(JSON.parse(raw));
+      if (parsed) return parsed;
+    }
   } catch {
-    return DEFAULT_COUPONS;
+    /* ignore */
   }
+  return DEFAULT_COUPONS;
 }
 
-export function saveCoupons(coupons: Coupon[]) {
-  if (typeof window === "undefined") return;
-  window.localStorage.setItem(
-    COUPONS_STORAGE_KEY,
-    JSON.stringify(
+export async function saveCouponsRemote(coupons: Coupon[], pin: string) {
+  const res = await fetch("/api/coupons", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json", "x-admin-pin": pin },
+    body: JSON.stringify(
       coupons.map((c) => ({ ...c, code: normalizeCode(c.code) })),
     ),
-  );
-}
-
-export function resetCoupons() {
-  if (typeof window === "undefined") return;
-  window.localStorage.removeItem(COUPONS_STORAGE_KEY);
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(json?.error ?? `Save failed (${res.status})`);
+  const next = sanitizeCoupons(json?.coupons ?? coupons) ?? coupons;
+  couponCache = next;
+  try {
+    window.localStorage.removeItem(COUPONS_STORAGE_KEY);
+  } catch {
+    /* ignore */
+  }
+  return json as { ok: true; committed?: boolean; sha?: string; url?: string };
 }
 
 export function getCouponByCode(code: string): Coupon | undefined {
@@ -110,21 +134,55 @@ export function applyCoupon(subtotal: number, code: string): CouponResult {
   return { coupon, discount, total: Math.max(0, subtotal - discount) };
 }
 
-/** Reactive coupon list for admin + checkout. */
+/** Reactive coupon list for admin + checkout (reads shared JSON). */
 export function useCoupons() {
-  const [coupons, setCoupons] = useState<Coupon[]>(DEFAULT_COUPONS);
+  const [coupons, setCouponsState] = useState<Coupon[]>(DEFAULT_COUPONS);
+
   useEffect(() => {
-    setCoupons(getCoupons());
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(COUPONS_URL, { cache: "no-store" });
+        if (!res.ok) return;
+        const s = sanitizeCoupons(await res.json());
+        if (s && !cancelled) {
+          couponCache = s;
+          setCouponsState(s);
+          return;
+        }
+      } catch {
+        /* ignore */
+      }
+      if (!cancelled) {
+        const local = getCoupons();
+        couponCache = local;
+        setCouponsState(local);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
-  return {
-    coupons,
-    setCoupons: (next: Coupon[]) => {
-      saveCoupons(next);
-      setCoupons(next);
+
+  const setCoupons = useCallback(async (next: Coupon[], pin: string) => {
+    const result = await saveCouponsRemote(next, pin);
+    const clean = sanitizeCoupons(next) ?? next;
+    couponCache = clean;
+    setCouponsState(clean);
+    return result;
+  }, []);
+
+  const reset = useCallback(
+    async (pin: string) => {
+      const result = await saveCouponsRemote(DEFAULT_COUPONS, pin);
+      couponCache = DEFAULT_COUPONS;
+      setCouponsState(DEFAULT_COUPONS);
+      return result;
     },
-    reset: () => {
-      resetCoupons();
-      setCoupons(DEFAULT_COUPONS);
-    },
-  };
+    [],
+  );
+
+  return { coupons, setCoupons, reset, setCouponsState };
 }
+
+export { sanitizeCoupons };

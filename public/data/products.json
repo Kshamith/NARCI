@@ -1,0 +1,100 @@
+[
+  {
+    "id": "1",
+    "sku": "NARCI-001",
+    "slug": "framed-katana",
+    "name": "Framed Katana",
+    "tagline": "Steel. Shadow. Wall.",
+    "description": "A full-length katana suspended in a brutalist black frame. Not a replica toy. A statement blade mounted for rooms that refuse beige. The edge is display-safe; the presence is not.",
+    "price": 4200,
+    "sizes": [{ "label": "ONE SIZE", "price": 4200 }],
+    "images": [
+      "/products/narci-001-01.jpg",
+      "/products/narci-001-02.jpg",
+      "/products/narci-001-03.jpg"
+    ],
+    "category": "katana",
+    "specs": [
+      "Black steel frame, museum acrylic",
+      "120 × 28 cm",
+      "Hidden French-cleat mount"
+    ],
+    "isNew": false
+  },
+  {
+    "id": "2",
+    "sku": "NARCI-002",
+    "slug": "cash-frame-revolver",
+    "name": "Cash Frame Revolver",
+    "tagline": "Money print. Cold steel.",
+    "description": "A stylized revolver cut against a tiled money-print ground, locked in a sharp black frame. Instagram bait with a spine. Built to hang where a landscape painting would apologize.",
+    "price": 3800,
+    "sizes": [{ "label": "ONE SIZE", "price": 3800 }],
+    "images": [
+      "/products/narci-002-01.jpg",
+      "/products/narci-002-02.jpg",
+      "/products/narci-002-03.jpg"
+    ],
+    "category": "framed-weapon",
+    "specs": ["Archival money-print ground", "70 × 50 cm", "Flush wall hangers"],
+    "isNew": false
+  },
+  {
+    "id": "3",
+    "sku": "NARCI-003",
+    "slug": "f1-front-wing-wall-mount",
+    "name": "F1 Front Wing Wall Mount",
+    "tagline": "Downforce, displayed.",
+    "description": "A scaled F1 front-wing form in matte carbon look, mounted as wall sculpture. Pit-lane geometry for a living room that wants speed, not scented candles.",
+    "price": 6800,
+    "sizes": [{ "label": "ONE SIZE", "price": 6800 }],
+    "images": [
+      "/products/narci-003-01.jpg",
+      "/products/narci-003-02.jpg",
+      "/products/narci-003-03.jpg"
+    ],
+    "category": "motorsport",
+    "specs": [
+      "Carbon-look composite",
+      "140 × 32 × 18 cm",
+      "Dual-point steel wall brackets"
+    ],
+    "isNew": false
+  },
+  {
+    "id": "4",
+    "sku": "NARCI-004",
+    "slug": "pit-wall-number-plate",
+    "name": "Pit Wall Number Plate",
+    "tagline": "Race number. No mercy.",
+    "description": "An oversized pit-wall number in condensed grotesk, riveted to a raw aluminum plate. Pick the digit that owns the room. Looks like it fell off a garage at 300 km/h.",
+    "price": 2900,
+    "sizes": [{ "label": "ONE SIZE", "price": 2900 }],
+    "images": [
+      "/products/narci-004-01.jpg",
+      "/products/narci-004-02.jpg",
+      "/products/narci-004-03.jpg"
+    ],
+    "category": "motorsport",
+    "specs": ["Brushed aluminum plate", "80 × 80 cm", "Exposed bolt mount"],
+    "isNew": false
+  },
+  {
+    "id": "5",
+    "sku": "NARCI-005",
+    "slug": "shadow-box-brass-knuckles",
+    "name": "Shadow Box Brass Knuckles",
+    "tagline": "Unbreakable. Unapologetic.",
+    "description": "Cast brass knuckles in a deep black shadow box, lit by a single hairline of negative space. Not jewelry. Not cute. A relic of power, framed.",
+    "price": 3400,
+    "sizes": [{ "label": "ONE SIZE", "price": 3400 }],
+    "images": [
+      "/products/narci-005-01.jpg",
+      "/products/narci-005-02.jpg",
+      "/products/narci-005-03.jpg"
+    ],
+    "category": "framed-weapon",
+    "specs": ["Cast alloy, matte black box", "40 × 40 × 8 cm", "Recessed keyhole mount"],
+    "isNew": false
+  }
+]

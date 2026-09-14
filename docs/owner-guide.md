@@ -30,9 +30,9 @@
 
 | # | What | File | Current value | Replace with |
 |---|------|------|---------------|--------------|
-| 1 | WhatsApp number orders go to | `lib/whatsapp.ts:5` | `"15555555555"` | Real WhatsApp Business number in country-code format, digits only (e.g. `"919876543210"`) |
-| 2 | Instagram link | `components/Footer.tsx:37`, `app/contact/page.tsx:35` | `https://instagram.com` | Brand profile URL, e.g. `https://instagram.com/narci.studio` |
-| 3 | Contact email | `app/contact/page.tsx:43-46`, `components/ContactForm.tsx:17` | `studio@narci.example` | Real inbox, in both files |
+| 1 | WhatsApp number orders go to | `/admin` → Settings (stored in `public/data/settings.json`, fallback `lib/whatsapp.ts`) | `"918618425359"` | **TODO (owner): replace with the final company WhatsApp number** — digits only with country code. Easiest: `/admin` → Settings → Save (commits + redeploys). |
+| 2 | Instagram link | `/admin` → Settings (stored in `public/data/settings.json`) | `https://instagram.com` | **TODO (owner): replace with the company Instagram URL**, e.g. `https://instagram.com/narci.studio` — via `/admin` → Settings → Save. |
+| 3 | Contact email | `/admin` → Settings (stored in `public/data/settings.json`) | `kshamithrajshetty@gmail.com` | **TODO (owner): replace with the final company inbox** — via `/admin` → Settings → Save. Temporary personal mail in use for now. |
 | 4 | Newsletter signup | `components/Footer.tsx:13` | `console.log` only — submissions go nowhere | Wire to an email provider (e.g. Buttondown, Mailchimp) or remove the form |
 | 5 | Product photos | `public/products/` + `components/ProductVisual.tsx:9` | Branded placeholder blocks | Real JPGs; then set `USE_REAL_PHOTOS = true` (see §6) |
 | 6 | Admin PIN | `components/AdminConsole.tsx:16-19` | Demo PIN `narci123` | Set env var `NEXT_PUBLIC_ADMIN_PIN` (see §11) |
@@ -256,20 +256,13 @@ Coupon: NARCI10 (−₹680)
 Total: ₹6,120
 ```
 
-Size appears per line, coupon/discount/subtotal only when a valid coupon applied. **Set the number first** (`lib/whatsapp.ts:5`):
+Size appears per line, coupon/discount/subtotal only when a valid coupon applied. **Set the number in `/admin` → Settings** (stored in `public/data/settings.json` as `whatsappPhone`; fallback constant `WHATSAPP_PHONE` in `lib/whatsapp.ts` is currently `"918618425359"`).
 
-```ts
-// TODO: replace with real WhatsApp Business number
-export const WHATSAPP_PHONE = "15555555555";
-// becomes, e.g.:
-export const WHATSAPP_PHONE = "919876543210";
-```
-
-Digits only, with country code, no `+`/spaces. The footer and contact-page WhatsApp buttons reuse this constant.
+Digits only, with country code, no `+`/spaces. The footer and contact-page WhatsApp buttons read the shared settings (footer via `useSiteSettings`, contact page reads `settings.json` server-side).
 
 ### Contact form
 
-`components/ContactForm.tsx` collects name/email/message and opens the visitor's mail app addressed to `studio@narci.example` (`ContactForm.tsx:15-18`). There is **no server delivery** — update the address in `ContactForm.tsx:17` and the matching `mailto:` link in `app/contact/page.tsx:42-47`.
+`components/ContactForm.tsx` collects name/email/message and opens the visitor's mail app addressed to `kshamithrajshetty@gmail.com` (temporary personal mail — **TODO (owner): replace with the company inbox** via `/admin` → Settings). There is **no server delivery**.
 
 ### Currency
 
@@ -279,7 +272,7 @@ Digits only, with country code, no `+`/spaces. The footer and contact-page Whats
 
 ## 11. Admin console (`/admin`)
 
-`app/admin/page.tsx` renders `components/AdminConsole.tsx` (page is `noindex`). Three tabs: **products**, **coupons**, **orders**.
+`app/admin/page.tsx` renders `components/AdminConsole.tsx` (page is `noindex`). Four tabs: **products**, **coupons**, **orders**, **settings**. Saving in any tab commits the shared JSON in `public/data/` to GitHub (`kshamith/NARCI`) via `app/api/*/route.ts`, and Vercel redeploys — changes appear on all devices after ~1–2 min. Requires env vars `ADMIN_PIN`, `GITHUB_TOKEN`, `GITHUB_REPO`, `GITHUB_BRANCH` (see `.env.example`).
 
 ### Entry gate
 
@@ -299,24 +292,24 @@ Set a real PIN via env var `NEXT_PUBLIC_ADMIN_PIN` (Vercel → Project Settings 
 - List shows name, SKU, `/shop/<slug>`, sizes with prices; per-row View / Edit / Delete; `+ New product`; `Reset defaults` restores the built-in five.
 - Form fields: Name\*, SKU\* (e.g. `NARCI-006`, **locked after creation** — to change a SKU, delete and recreate), URL slug (auto-generated from the name via `slugify`, `:23-30`; override only if you need a custom URL), Category (free text; new values appear in the shop filter), Tagline, Base price (INR)\*, Description, Images (one `/products/….jpg` path per line), Specs (one per line; first three show on cards).
 - **Sizes editor** (`:374+`): one row per variant, each with its own label + price; `+ Add size`; `×` removes a row. Single-size product = one row labelled `ONE SIZE` at the base price. Validation: name, SKU and base price required; ≥1 labelled size, each price > 0; SKU/slug must be unique.
-- Saving writes the whole catalog to browser `localStorage` (`persist()` → key `narci-admin-products-v1`, see `lib/catalog-store.ts:6`).
+- Saving PUTs the whole catalog to `/api/products` (PIN-checked via `x-admin-pin` vs server `ADMIN_PIN`), which writes `public/data/products.json` locally in dev or commits it to GitHub in production.
+- Product form has a **NEW sticker checkbox** (`isNew`); the list also has a per-row **New? / ★ New** quick toggle. When true, a `NEW` badge (`components/NewBadge.tsx`) shows on shop cards, the detail page, and home.
 
 ### Coupons tab
 
-Add code + type (`% off` / `₹ flat off`) + value + optional minimum subtotal; Enable/Disable toggle; Delete; `Reset defaults` restores `NARCI10`/`FLAT500`. Stored under `narci-coupons-v1`.
+Add code + type (`% off` / `₹ flat off`) + value + optional minimum subtotal; Enable/Disable toggle; Delete; `Reset defaults` restores `NARCI10`/`FLAT500`. Every change PUTs `/api/coupons` → commits `public/data/coupons.json` to GitHub.
 
 ### Orders tab
 
-There are **no server-side orders** — completed sales arrive as WhatsApp chats to `WHATSAPP_PHONE`. The tab explains this and shows a local log (this browser only, last 50 entries, `lib/orders.ts:32-40`) of each Bag → WhatsApp handoff: timestamp, lines with sizes, coupon, subtotal, total. Refresh / Clear log buttons included.
+There are **no server-side orders** — completed sales arrive as WhatsApp chats to the settings number. The tab shows a **shared log** (`public/data/orders.json`, all devices after redeploy) plus this browser's local log (last 50, `narci-order-log-v1`). Checkout appends locally and POSTs `/api/orders` best-effort (never blocks WhatsApp). Buttons: Refresh, Clear local log, Clear shared log (PIN-checked, commits to GitHub).
 
-### The localStorage caveat (important)
+### Settings tab
 
-Admin edits live **only in the browser where they were made** (keys: `narci-admin-products-v1`, `narci-coupons-v1`, `narci-order-log-v1`; bag: `narci-cart`, `narci-coupon`). Consequences:
+Edits WhatsApp number, contact email and Instagram URL → PUTs `/api/settings` → commits `public/data/settings.json`. Footer, contact page and checkout all read it.
 
-- Edits are invisible in other browsers, devices and incognito windows.
-- Clearing site data wipes them (Reset buttons restore built-ins).
-- The code is structured for a future CMS swap without touching shop/cart components (`lib/catalog-store.ts:7-12`).
-- Until then: make admin edits in the browser you demo from, and treat `data/products.ts` + `lib/coupons.ts` as the canonical defaults everyone else sees.
+### The persistence model (important — updated)
+
+Admin edits commit the shared JSON files in `public/data/` to GitHub and Vercel redeploys, so they are visible on all devices. The site reads `/data/*.json` at load with bundled defaults as fallback. Legacy per-browser `localStorage` keys (`narci-admin-products-v1`, `narci-coupons-v1`) are only a fallback for old data; the bag (`narci-cart`, `narci-coupon`) intentionally stays per-visitor localStorage.
 
 ---
 
@@ -362,8 +355,8 @@ To rebrand: replace the three hex values in **both** files. Bone = background, i
 
 | Symptom | Cause | Fix |
 |---------|-------|-----|
-| Order goes to the wrong number / nothing happens | `WHATSAPP_PHONE` still placeholder | Set real digits-only number (§10) |
-| New admin product 404s on another device | Admin edits are per-browser localStorage | Edit in the demo browser; long-term: add a backend (§11) |
+| Order goes to the wrong number / nothing happens | Settings number not updated | Set it in `/admin` → Settings (§10/§11), wait for redeploy |
+| New admin product 404s on another device | Redeploy hasn't finished, or commit failed (missing env) | Wait ~2 min; check `github.com/kshamith/NARCI/commits`; verify Vercel env vars + redeploy |
 | New size not selectable | Saved on a stale form, or size row had no label | Label every size row; detail resets selection when sizes change (§9) |
 | Coupon "invalid" | Typo, disabled/deleted code, or bag below `minSubtotal` | Check `/admin` → Coupons; note minimums (§10) |
 | Shop filter shows two near-identical categories | `category` spelling differs between products | Unify the string in `data/products.ts` or `/admin` |

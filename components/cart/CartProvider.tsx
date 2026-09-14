@@ -4,7 +4,7 @@ import { createContext, useCallback, useEffect, useMemo, useState } from "react"
 import { products as defaultProducts } from "@/data/products";
 import type { Product } from "@/data/products";
 import { getSizePrice } from "@/data/products";
-import { getCatalogProducts } from "@/lib/catalog-store";
+import { getCatalogProducts, sanitizeProducts } from "@/lib/catalog-store";
 import { applyCoupon, normalizeCode } from "@/lib/coupons";
 
 export type CartLine = { sku: string; qty: number; size?: string };
@@ -80,7 +80,15 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     } catch {
       /* ignore */
     }
-    setCatalog(getCatalogProducts());
+    fetch("/data/products.json", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        const next = getCatalogProducts();
+        const clean = sanitizeProducts(j);
+        if (clean) setCatalog(clean);
+        else setCatalog(next);
+      })
+      .catch(() => setCatalog(getCatalogProducts()));
     setHydrated(true);
   }, []);
 
