@@ -1,1 +1,17 @@
-[]
+[
+  {
+    "at": "2026-09-14T17:28:56.828Z",
+    "lines": [
+      {
+        "sku": "NARCI-003",
+        "name": "F1 Front Wing Wall Mount",
+        "qty": 1,
+        "unitPrice": 6800
+      }
+    ],
+    "coupon": "NARCI10",
+    "discount": 680,
+    "subtotal": 6800,
+    "total": 6120
+  }
+]
