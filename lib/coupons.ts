@@ -80,8 +80,9 @@ export function getCoupons(): Coupon[] {
 }
 
 export async function saveCouponsRemote(coupons: Coupon[], pin: string) {
+  // POST (not PUT): some mobile networks/proxies reject PUT with 405.
   const res = await fetch("/api/coupons", {
-    method: "PUT",
+    method: "POST",
     headers: { "Content-Type": "application/json", "x-admin-pin": pin },
     body: JSON.stringify(
       coupons.map((c) => ({ ...c, code: normalizeCode(c.code) })),

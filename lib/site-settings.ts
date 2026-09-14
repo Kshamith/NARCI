@@ -52,8 +52,9 @@ export function useSiteSettings() {
   }, []);
 
   const save = useCallback(async (next: SiteSettings, pin: string) => {
+    // POST (not PUT): some mobile networks/proxies reject PUT with 405.
     const res = await fetch("/api/settings", {
-      method: "PUT",
+      method: "POST",
       headers: { "Content-Type": "application/json", "x-admin-pin": pin },
       body: JSON.stringify(next),
     });

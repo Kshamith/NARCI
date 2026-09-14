@@ -101,8 +101,9 @@ function readLegacyLocal(): Product[] | null {
 
 /** Persist via API (commits to GitHub on Vercel). Returns commit info. */
 export async function saveCatalogProductsRemote(next: Product[], pin: string) {
+  // POST (not PUT): some mobile networks/proxies reject PUT with 405.
   const res = await fetch("/api/products", {
-    method: "PUT",
+    method: "POST",
     headers: { "Content-Type": "application/json", "x-admin-pin": pin },
     body: JSON.stringify(next),
   });

@@ -49,3 +49,6 @@ export async function PUT(req: Request) {
     return NextResponse.json({ error: message, products: clean }, { status });
   }
 }
+
+// POST alias: some mobile networks/proxies block PUT, so the admin saves via POST.
+export { PUT as POST };

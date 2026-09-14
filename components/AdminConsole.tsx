@@ -819,9 +819,14 @@ function OrdersTab() {
             if (!window.confirm("Clear the SHARED order log for all devices? This commits to GitHub.")) return;
             setStatus("Clearing…");
             try {
+              // POST (not DELETE): some mobile networks/proxies reject DELETE with 405.
               const res = await fetch("/api/orders", {
-                method: "DELETE",
-                headers: { "x-admin-pin": getStoredPin() },
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "x-admin-pin": getStoredPin(),
+                },
+                body: JSON.stringify({ action: "clear" }),
               });
               const json = await res.json().catch(() => ({}));
               if (!res.ok) throw new Error(json?.error ?? "Clear failed.");

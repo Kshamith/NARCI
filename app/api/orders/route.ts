@@ -44,13 +44,32 @@ export async function GET() {
 
 // Appends one entry. No PIN required (called by checkout), but rate-limited
 // by keeping only the latest 100 entries.
+// POST with { action: "clear" } clears the log instead (PIN required, since
+// some mobile networks block DELETE).
 export async function POST(req: Request) {
-  let entry: unknown;
+  let body: unknown;
   try {
-    entry = await req.json();
+    body = await req.json();
   } catch {
     return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
+  if (
+    typeof body === "object" &&
+    body !== null &&
+    (body as Record<string, unknown>).action === "clear"
+  ) {
+    if (!checkAdminPin(req)) {
+      return NextResponse.json({ error: "Wrong PIN." }, { status: 401 });
+    }
+    try {
+      const result = await writeDataFile("orders.json", []);
+      return NextResponse.json({ ok: true, ...result });
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Clear failed.";
+      return NextResponse.json({ error: message }, { status: 500 });
+    }
+  }
+  const entry: unknown = body;
   const clean = sanitizeLog([entry]);
   if (!clean || clean.length === 0) {
     return NextResponse.json({ error: "Invalid order entry." }, { status: 400 });
