@@ -1,5 +1,19 @@
 [
   {
+    "at": "2026-09-18T14:51:08.085Z",
+    "lines": [
+      {
+        "sku": "NARCI-002",
+        "name": "Cash Frame Revolver",
+        "qty": 1,
+        "unitPrice": 3800
+      }
+    ],
+    "discount": 0,
+    "subtotal": 3800,
+    "total": 3800
+  },
+  {
     "at": "2026-09-14T17:28:56.828Z",
     "lines": [
       {
